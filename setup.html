@@ -1,0 +1,450 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Card Builder 🩷</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Lato:wght@300;400;700&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Lato', sans-serif;
+      background: linear-gradient(140deg, hsl(330,70%,94%), hsl(280,50%,95%));
+      min-height: 100vh;
+      display: flex; align-items: center; justify-content: center;
+      padding: 24px 16px;
+    }
+    .box {
+      background: rgba(255,255,255,0.55);
+      backdrop-filter: blur(20px);
+      border: 1px solid rgba(255,255,255,0.7);
+      border-radius: 24px;
+      box-shadow: 0 8px 32px rgba(200,80,140,0.15);
+      padding: 36px 32px;
+      width: 100%; max-width: 460px;
+      text-align: center;
+    }
+    h1 {
+      font-size: 1.6rem; font-weight: 700;
+      color: hsl(340,60%,55%);
+      margin-bottom: 6px;
+    }
+    p.sub {
+      font-size: 0.88rem; color: hsl(330,15%,45%);
+      margin-bottom: 32px; line-height: 1.5;
+    }
+    .upload-area {
+      border: 2px dashed rgba(200,80,140,0.35);
+      border-radius: 16px;
+      padding: 24px 16px;
+      margin-bottom: 20px;
+      cursor: pointer;
+      transition: background 0.2s, border-color 0.2s;
+      position: relative;
+    }
+    .upload-area:hover { background: rgba(200,80,140,0.06); border-color: rgba(200,80,140,0.6); }
+    .upload-area.done { border-color: hsl(340,60%,60%); background: rgba(200,80,140,0.06); }
+    .upload-area .icon { font-size: 2rem; margin-bottom: 8px; }
+    .upload-area .label { font-size: 0.9rem; color: hsl(330,15%,40%); }
+    .upload-area .done-text { font-size: 0.82rem; color: hsl(340,55%,50%); margin-top: 4px; font-weight: 700; }
+    .upload-area input[type=file] {
+      position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; height: 100%;
+    }
+    .preview-img {
+      width: 100%; border-radius: 10px; margin-top: 10px;
+      max-height: 160px; object-fit: cover; display: none;
+      border: 2px solid rgba(200,80,140,0.3);
+    }
+    .preview-img.visible { display: block; }
+
+    .btn-generate {
+      width: 100%;
+      background: linear-gradient(135deg, hsl(340,65%,68%), hsl(280,55%,68%));
+      color: #fff; border: none; border-radius: 50px;
+      padding: 15px 24px;
+      font-size: 1rem; font-family: 'Lato', sans-serif;
+      font-weight: 700; letter-spacing: 0.04em; cursor: pointer;
+      box-shadow: 0 4px 20px rgba(200,80,140,0.3);
+      transition: transform 0.2s, box-shadow 0.2s;
+      margin-top: 10px;
+    }
+    .btn-generate:hover { transform: translateY(-2px); box-shadow: 0 8px 28px rgba(200,80,140,0.4); }
+    .btn-generate:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+
+    #status {
+      margin-top: 18px; font-size: 0.88rem;
+      color: hsl(340,55%,50%); min-height: 20px;
+    }
+    .step {
+      background: rgba(200,80,140,0.08);
+      border-radius: 10px;
+      padding: 10px 14px;
+      font-size: 0.82rem; color: hsl(330,20%,35%);
+      margin-bottom: 24px; text-align: left;
+      line-height: 1.7;
+    }
+    .step strong { color: hsl(340,60%,50%); }
+  </style>
+</head>
+<body>
+<div class="box">
+  <h1>Card Builder 🩷</h1>
+  <p class="sub">Add your photo &amp; song here.<br/>Then download and send the ready file.</p>
+
+  <div class="step">
+    <strong>Step 1</strong> — Add photo &amp; song below<br/>
+    <strong>Step 2</strong> — Click "Generate &amp; Download"<br/>
+    <strong>Step 3</strong> — Send the downloaded <strong>index.html</strong> to her<br/>
+    <strong>Step 4</strong> — She opens it — everything is already inside ✅
+  </div>
+
+  <!-- Photo upload -->
+  <div class="upload-area" id="photo-area">
+    <input type="file" id="photo-file" accept="image/*" />
+    <div class="icon">📷</div>
+    <div class="label">Tap to add your photo</div>
+    <div class="done-text" id="photo-done" style="display:none"></div>
+    <img class="preview-img" id="photo-preview" alt="preview" />
+  </div>
+
+  <!-- Audio upload -->
+  <div class="upload-area" id="audio-area">
+    <input type="file" id="audio-file" accept="audio/*" />
+    <div class="icon">🎵</div>
+    <div class="label">Tap to add your song</div>
+    <div class="done-text" id="audio-done" style="display:none"></div>
+  </div>
+
+  <button class="btn-generate" id="gen-btn" disabled>Generate &amp; Download 💌</button>
+  <div id="status"></div>
+</div>
+
+<script>
+  let photoBase64 = null;
+  let audioBase64 = null;
+  let audioMime   = 'audio/mpeg';
+
+  /* ── Photo ── */
+  document.getElementById('photo-file').addEventListener('change', e => {
+    const file = e.target.files[0]; if (!file) return;
+    const reader = new FileReader();
+    reader.onload = ev => {
+      // Compress
+      const img = new Image();
+      img.onload = () => {
+        const MAX = 1000;
+        let w = img.width, h = img.height;
+        if (w > MAX || h > MAX) {
+          const r = Math.min(MAX/w, MAX/h);
+          w = Math.round(w*r); h = Math.round(h*r);
+        }
+        const canvas = document.createElement('canvas');
+        canvas.width = w; canvas.height = h;
+        canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+        photoBase64 = canvas.toDataURL('image/jpeg', 0.85);
+
+        document.getElementById('photo-preview').src = photoBase64;
+        document.getElementById('photo-preview').classList.add('visible');
+        document.getElementById('photo-done').textContent = '✅ ' + file.name;
+        document.getElementById('photo-done').style.display = 'block';
+        document.getElementById('photo-area').classList.add('done');
+        checkReady();
+      };
+      img.src = ev.target.result;
+    };
+    reader.readAsDataURL(file);
+  });
+
+  /* ── Audio ── */
+  document.getElementById('audio-file').addEventListener('change', e => {
+    const file = e.target.files[0]; if (!file) return;
+    audioMime = file.type || 'audio/mpeg';
+    document.getElementById('status').textContent = 'Loading song... (may take a moment for large files)';
+    const reader = new FileReader();
+    reader.onload = ev => {
+      audioBase64 = ev.target.result; // full data URL
+      document.getElementById('audio-done').textContent = '✅ ' + file.name;
+      document.getElementById('audio-done').style.display = 'block';
+      document.getElementById('audio-area').classList.add('done');
+      document.getElementById('status').textContent = '';
+      checkReady();
+    };
+    reader.readAsDataURL(file);
+  });
+
+  function checkReady() {
+    document.getElementById('gen-btn').disabled = !(photoBase64 && audioBase64);
+  }
+
+  /* ── Generate ── */
+  document.getElementById('gen-btn').addEventListener('click', () => {
+    document.getElementById('status').textContent = 'Building your card... 🩷';
+    document.getElementById('gen-btn').disabled = true;
+
+    setTimeout(() => {
+      const html = buildHTML(photoBase64, audioBase64);
+      const blob = new Blob([html], { type: 'text/html' });
+      const url  = URL.createObjectURL(blob);
+      const a    = document.createElement('a');
+      a.href = url;
+      a.download = 'index.html';
+      a.click();
+      URL.revokeObjectURL(url);
+      document.getElementById('status').textContent = '✅ Downloaded! Send the index.html file to her 💌';
+      document.getElementById('gen-btn').disabled = false;
+    }, 100);
+  });
+
+  /* ══════════════════════════════════════════════════════
+     THE COMPLETE CARD HTML — photo & audio embedded inline
+  ══════════════════════════════════════════════════════ */
+  function buildHTML(photo, audio) {
+    return `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0" />
+  <title>sorryyyyyyyyy r\u00e0k \uD83E\uDE77</title>
+  <meta name="description" content="A personal, heartfelt interactive apology card." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;1,300;1,400&family=Lato:wght@300;400&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --pink-deep: hsl(340, 60%, 60%);
+      --card-border: rgba(255,255,255,0.38);
+      --card-bg: rgba(255,240,248,0.22);
+    }
+    html, body { height: 100%; width: 100%; overflow: hidden; font-family: 'Lato', sans-serif; }
+    #bg {
+      position: fixed; inset: 0; z-index: 0; overflow: hidden;
+      background: linear-gradient(140deg, hsl(330,70%,94%) 0%, hsl(300,60%,95%) 40%, hsl(340,80%,97%) 70%, hsl(280,50%,95%) 100%);
+    }
+    .bg-orb { position:absolute;border-radius:50%;filter:blur(70px);opacity:0.45;animation:orb-drift 14s ease-in-out infinite alternate; }
+    .bg-orb:nth-child(1){width:380px;height:380px;background:hsl(340,80%,84%);top:-80px;left:-80px;animation-duration:16s}
+    .bg-orb:nth-child(2){width:280px;height:280px;background:hsl(280,60%,85%);bottom:-60px;right:-60px;animation-duration:18s}
+    .bg-orb:nth-child(3){width:200px;height:200px;background:hsl(340,60%,90%);top:40%;left:60%;animation-duration:12s}
+    @keyframes orb-drift { from{transform:translate(0,0) scale(1);}to{transform:translate(30px,20px) scale(1.08);} }
+    #bg-hearts{position:fixed;inset:0;z-index:0;pointer-events:none;overflow:hidden;}
+    .bg-heart{position:absolute;opacity:0;user-select:none;animation:bg-heart-float linear infinite;}
+    @keyframes bg-heart-float {
+      0%{transform:translateY(110vh) scale(0.6);opacity:0;}
+      10%{opacity:0.35;}90%{opacity:0.28;}
+      100%{transform:translateY(-10vh) scale(1.1);opacity:0;}
+    }
+    #app{position:relative;z-index:1;height:100dvh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:12px 16px;}
+    #music-btn{
+      position:fixed;top:16px;right:16px;z-index:100;
+      background:rgba(255,255,255,0.35);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);
+      border:1px solid rgba(255,255,255,0.5);border-radius:50%;width:44px;height:44px;
+      font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center;
+      box-shadow:0 4px 16px rgba(200,100,140,0.2);transition:transform 0.2s,box-shadow 0.2s;
+    }
+    #music-btn:hover{transform:scale(1.1);box-shadow:0 6px 22px rgba(200,100,140,0.3);}
+    #music-btn.playing{animation:spin-slow 3s linear infinite;}
+    @keyframes spin-slow{to{transform:rotate(360deg);}}
+    #card{
+      position:relative;width:100%;max-width:420px;
+      height:calc(100dvh - 80px);max-height:780px;
+      border-radius:28px;border:1px solid var(--card-border);
+      box-shadow:0 8px 32px rgba(200,80,140,0.18),0 0 0 1px rgba(255,255,255,0.2),inset 0 1px 0 rgba(255,255,255,0.4);
+      overflow:hidden;background:var(--card-bg);
+      backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);
+      animation:card-in 1.1s cubic-bezier(0.22,1,0.36,1) both, card-float 5s ease-in-out 1.2s infinite;
+      transition:box-shadow 0.6s ease;margin-top:28px;
+    }
+    #card.glowing{box-shadow:0 8px 40px rgba(200,80,140,0.35),0 0 70px rgba(255,160,200,0.4),0 0 0 1px rgba(255,255,255,0.3);}
+    @keyframes card-in{from{opacity:0;transform:scale(0.9) translateY(28px);}to{opacity:1;transform:scale(1) translateY(0);}}
+    @keyframes card-float{0%,100%{transform:translateY(0);}50%{transform:translateY(-7px);}}
+    #card-photo{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:0;}
+    #card-overlay{
+      position:absolute;inset:0;z-index:1;pointer-events:none;
+      background:linear-gradient(160deg,rgba(20,5,15,0.42) 0%,rgba(160,40,90,0.35) 45%,rgba(10,2,8,0.62) 100%);
+    }
+    .card-corner{position:absolute;z-index:2;width:10px;height:10px;border-radius:50%;background:rgba(255,255,255,0.6);box-shadow:0 0 8px rgba(255,180,210,0.9);}
+    .card-corner.tl{top:14px;left:14px;}.card-corner.tr{top:14px;right:14px;}
+    .card-corner.bl{bottom:14px;left:14px;}.card-corner.br{bottom:14px;right:14px;}
+    #card-content{position:absolute;inset:0;z-index:3;display:flex;flex-direction:column;}
+    #initial-screen{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:32px 28px;text-align:center;}
+    .title-main{font-family:'Cormorant Garamond',serif;font-size:clamp(2rem,7vw,2.8rem);font-weight:500;color:#fff;letter-spacing:0.02em;line-height:1.2;margin-bottom:10px;text-shadow:0 2px 20px rgba(0,0,0,0.4);}
+    .title-sub{font-size:clamp(0.85rem,3vw,0.95rem);color:rgba(255,255,255,0.75);font-weight:300;margin-bottom:36px;letter-spacing:0.05em;}
+    .btn-primary{display:inline-flex;align-items:center;gap:8px;background:linear-gradient(135deg,hsl(340,65%,72%),hsl(280,55%,72%));color:#fff;border:none;border-radius:50px;padding:14px 30px;font-size:clamp(0.9rem,3.5vw,1rem);font-family:'Lato',sans-serif;font-weight:400;letter-spacing:0.04em;cursor:pointer;box-shadow:0 4px 20px rgba(200,80,140,0.3);transition:transform 0.2s,box-shadow 0.2s;}
+    .btn-primary:hover{transform:translateY(-2px) scale(1.03);box-shadow:0 8px 28px rgba(200,80,140,0.4);}
+    .btn-primary:active{transform:scale(0.97);}
+    #card-header{display:none;flex-shrink:0;padding:20px 22px 8px;text-align:center;}
+    #card-header.visible{display:block;}
+    .card-title{font-family:'Cormorant Garamond',serif;font-size:clamp(1.3rem,5vw,1.7rem);font-weight:500;color:#fff;text-shadow:0 2px 12px rgba(0,0,0,0.5);letter-spacing:0.02em;}
+    #message-section{display:none;flex:1;overflow-y:auto;overflow-x:hidden;padding:12px 22px 18px;scrollbar-width:thin;scrollbar-color:rgba(255,255,255,0.3) transparent;}
+    #message-section::-webkit-scrollbar{width:3px;}
+    #message-section::-webkit-scrollbar-thumb{background:rgba(255,255,255,0.3);border-radius:4px;}
+    #message-section.open{display:block;}
+    .divider{width:50px;height:1px;margin:10px auto 14px;background:linear-gradient(to right,transparent,rgba(255,255,255,0.45),transparent);}
+    .message-text{font-family:'Cormorant Garamond',serif;font-size:clamp(1rem,3.8vw,1.12rem);font-weight:400;line-height:1.9;color:#fff;text-shadow:0 1px 6px rgba(0,0,0,0.45);word-break:break-word;}
+    .msg-para{display:block;margin-bottom:18px;opacity:0;transform:translateY(10px);transition:opacity 0.7s ease,transform 0.7s ease;}
+    .msg-para.revealed{opacity:1;transform:translateY(0);}
+    .sorry-line{display:block;color:hsl(340,90%,85%);font-style:italic;font-weight:500;letter-spacing:0.01em;text-shadow:0 1px 8px rgba(0,0,0,0.5);}
+    #sincere-section{display:none;flex-shrink:0;padding:0 22px 20px;text-align:center;}
+    #sincere-section.visible{display:block;}
+    .btn-sincere{display:inline-flex;align-items:center;gap:8px;background:rgba(255,255,255,0.18);backdrop-filter:blur(10px);color:#fff;border:1.5px solid rgba(255,255,255,0.45);border-radius:50px;padding:12px 26px;font-size:clamp(0.88rem,3.5vw,0.98rem);font-family:'Lato',sans-serif;font-weight:400;letter-spacing:0.04em;cursor:pointer;box-shadow:0 4px 18px rgba(0,0,0,0.18);transition:transform 0.2s,background 0.3s,box-shadow 0.2s;}
+    .btn-sincere:hover{transform:translateY(-2px);background:rgba(255,255,255,0.28);}
+    .float-heart{position:fixed;pointer-events:none;user-select:none;animation:fh-rise 3s ease-out forwards;z-index:200;}
+    @keyframes fh-rise{0%{transform:translateY(0) scale(0.5);opacity:0;}20%{opacity:1;}100%{transform:translateY(-55vh) scale(1.2);opacity:0;}}
+    .burst-heart{position:fixed;pointer-events:none;font-size:18px;user-select:none;animation:burst-out 0.9s ease-out forwards;z-index:201;}
+    @keyframes burst-out{0%{transform:translate(-50%,-50%) scale(0.4);opacity:1;}100%{transform:translate(calc(-50% + var(--bx)),calc(-50% + var(--by))) scale(1.1);opacity:0;}}
+    @media(max-width:380px){#message-section{padding:10px 16px 16px;}#card-header{padding:16px 16px 6px;}#sincere-section{padding:0 16px 16px;}}
+  </style>
+</head>
+<body>
+<div id="bg"><div class="bg-orb"></div><div class="bg-orb"></div><div class="bg-orb"></div></div>
+<div id="bg-hearts"></div>
+<button id="music-btn" title="Play / Pause music">\uD83C\uDFB5</button>
+<audio id="bg-audio" loop src="${audio}"></audio>
+<div id="app">
+  <div id="card">
+    <img id="card-photo" src="${photo}" alt="our photo" />
+    <div id="card-overlay"></div>
+    <div class="card-corner tl"></div><div class="card-corner tr"></div>
+    <div class="card-corner bl"></div><div class="card-corner br"></div>
+    <div id="card-content">
+      <div id="initial-screen">
+        <p class="title-main">sorryyyyyyyyy r\u00e0k \uD83E\uDE77</p>
+        <p class="title-sub">tap to open something for you</p>
+        <button class="btn-primary" id="open-btn">Read my message \uD83D\uDC8C</button>
+      </div>
+      <div id="card-header"><p class="card-title">sorryyyyyyyyy r\u00e0k \uD83E\uDE77</p></div>
+      <div id="message-section">
+        <div class="divider"></div>
+        <div class="message-text" id="message-content"></div>
+        <div class="divider" style="margin-top:4px;"></div>
+      </div>
+      <div id="sincere-section">
+        <button class="btn-sincere" id="sincere-btn">I really mean it \uD83E\uDD7A</button>
+      </div>
+    </div>
+  </div>
+</div>
+<script>
+const MESSAGE_PARAGRAPHS = [
+  " sorryyyyyyyyy r\u00e0k \uD83E\uDE77",
+  "naki ardam ayithanledu nen em chesnano kani ardam ayithandi feel ayinav ani sorryyy. enduku nak fark padadu ani anukuntanav. padthadi ,nuvu anukunna danikante ekkuve padthadi .",
+  "naki ninna nuvu message cheyyadu anepatiki eyes lo water vochesnayi. nenu undaleka pothanna kousar tala nosthandi .",
+  "nene monna anna intrest ledu ani sorry kani kopam lo anesna etla kavalante atla behave chesthanna kada ,sare apkunta try chestha sorry r\u00e0kkkk.",
+  "nen em ninni unfollow kavala ani cheyyale edo ayindi chala ante chala badesindi ,nijam cheppalante nen unfollow chesna ani nik telsde 3 or 4 days tharvtha adi chusi nuvu unfollow chesnav ani kuda telsu . kanisam okkasari kuda adagala ani pileda.",
+  "tarvtha nuvu send chesna half hour ke nen react ayina kani nuvu chuskolee 7 hours naki gurthundi baga.andyke unsend chesna ,nen em ninni seen lo vodhileyy nuvee nanni sent vodilesnav .",
+  "nik farak padna lekpoena nen vodhiley lenu ,nijamgane change kalenu. enka nen conscious lo unde behave chestha try chestha.",
+  "sorryyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyy\\nsorryyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyy\\nsorryyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyy\\nsorryyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyy\\nsorryyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyy."
+];
+
+// Background hearts
+(function(){
+  const c=document.getElementById('bg-hearts'),emojis=['\uD83E\uDE77','\uD83D\uDC97','\uD83D\uDC95','\uD83D\uDC96','\uD83C\uDF38'];
+  function spawn(){
+    const el=document.createElement('span');el.className='bg-heart';
+    el.textContent=emojis[Math.floor(Math.random()*emojis.length)];
+    el.style.left=Math.random()*100+'vw';
+    const dur=9+Math.random()*10;
+    el.style.animationDuration=dur+'s';el.style.animationDelay=Math.random()*4+'s';
+    el.style.fontSize=(10+Math.random()*12)+'px';c.appendChild(el);
+    setTimeout(()=>el.remove(),(dur+5)*1000);
+  }
+  for(let i=0;i<12;i++)setTimeout(spawn,i*800);setInterval(spawn,1800);
+})();
+
+// Music
+let audioPlaying=false;
+const musicBtn=document.getElementById('music-btn'),bgAudio=document.getElementById('bg-audio');
+musicBtn.addEventListener('click',()=>{
+  if(!audioPlaying){
+    bgAudio.play().then(()=>{audioPlaying=true;musicBtn.classList.add('playing');musicBtn.textContent='\uD83C\uDFB6';}).catch(()=>{});
+  }else{
+    bgAudio.pause();audioPlaying=false;musicBtn.classList.remove('playing');musicBtn.textContent='\uD83C\uDFB5';
+  }
+});
+
+// Open button
+document.getElementById('open-btn').addEventListener('click',function(){
+  const card=document.getElementById('card');
+  card.style.animation='none';
+  document.getElementById('initial-screen').style.display='none';
+  document.getElementById('card-header').classList.add('visible');
+  document.getElementById('message-section').classList.add('open');
+  // Auto-play music on this user gesture
+  bgAudio.play().then(()=>{audioPlaying=true;musicBtn.classList.add('playing');musicBtn.textContent='\uD83C\uDFB6';}).catch(()=>{});
+  setTimeout(()=>{card.style.animation='card-float 5s ease-in-out infinite';},700);
+  startMessageReveal();
+});
+
+function buildMessageDOM(){
+  const container=document.getElementById('message-content');
+  if(container.children.length>0)return;
+  MESSAGE_PARAGRAPHS.forEach((text,i)=>{
+    const span=document.createElement('span');span.className='msg-para';
+    if(i===MESSAGE_PARAGRAPHS.length-1){
+      text.split('\\n').forEach((line,li,arr)=>{
+        const ls=document.createElement('span');ls.className='sorry-line';ls.textContent=line;span.appendChild(ls);
+        if(li<arr.length-1)span.appendChild(document.createElement('br'));
+      });
+    }else{span.textContent=text;}
+    container.appendChild(span);
+  });
+}
+
+function startMessageReveal(){
+  buildMessageDOM();
+  const scroller=document.getElementById('message-section'),paras=document.querySelectorAll('.msg-para');
+  let delay=500;
+  paras.forEach((para,i)=>{
+    const isLast=i===paras.length-1;
+    setTimeout(()=>{
+      para.classList.add('revealed');
+      setTimeout(()=>scroller.scrollTo({top:scroller.scrollHeight,behavior:'smooth'}),150);
+      if(isLast)setTimeout(finalSorryAnimation,1400);
+    },delay);
+    delay+=isLast?1000:1500;
+  });
+}
+
+function finalSorryAnimation(){
+  const emojis=['\uD83E\uDE77','\uD83D\uDC97','\uD83D\uDC95','\uD83D\uDC96'],card=document.getElementById('card');
+  let count=0;
+  function spawnHeart(){
+    if(count>=22){document.getElementById('sincere-section').classList.add('visible');return;}
+    const el=document.createElement('span');el.className='float-heart';
+    el.textContent=emojis[Math.floor(Math.random()*emojis.length)];
+    const r=card.getBoundingClientRect();
+    el.style.left=(r.left+Math.random()*r.width)+'px';
+    el.style.top=(r.top+r.height*0.4+Math.random()*r.height*0.4)+'px';
+    el.style.fontSize=(16+Math.random()*14)+'px';
+    document.body.appendChild(el);setTimeout(()=>el.remove(),3200);
+    count++;setTimeout(spawnHeart,180+Math.random()*220);
+  }spawnHeart();
+}
+
+document.getElementById('sincere-btn').addEventListener('click',function(){
+  const card=document.getElementById('card'),emojis=['\uD83E\uDE77','\uD83D\uDC97','\uD83D\uDC95','\uD83D\uDC96','\uD83C\uDF38'];
+  card.classList.add('glowing');
+  const rect=this.getBoundingClientRect(),cx=rect.left+rect.width/2,cy=rect.top+rect.height/2;
+  for(let i=0;i<14;i++){
+    const el=document.createElement('span');el.className='burst-heart';
+    el.textContent=emojis[Math.floor(Math.random()*emojis.length)];
+    const angle=(Math.PI*2/14)*i,dist=70+Math.random()*60;
+    el.style.setProperty('--bx',(Math.cos(angle)*dist)+'px');el.style.setProperty('--by',(Math.sin(angle)*dist)+'px');
+    el.style.left=cx+'px';el.style.top=cy+'px';document.body.appendChild(el);setTimeout(()=>el.remove(),1000);
+  }
+  for(let j=0;j<12;j++)setTimeout(()=>{
+    const fh=document.createElement('span');fh.className='float-heart';
+    fh.textContent=emojis[Math.floor(Math.random()*emojis.length)];
+    fh.style.left=(10+Math.random()*80)+'vw';fh.style.top=(30+Math.random()*40)+'vh';
+    fh.style.fontSize=(18+Math.random()*10)+'px';document.body.appendChild(fh);setTimeout(()=>fh.remove(),3100);
+  },j*160);
+  setTimeout(()=>card.classList.remove('glowing'),4500);
+});
+<\/script>
+</body>
+</html>`;
+  }
+</script>
+</body>
+</html>
