@@ -198,7 +198,7 @@
       letter-spacing: 0.02em;
     }
 
-    /* ─── MESSAGE AREA — scrolls over photo line by line ─── */
+    /* ─── MESSAGE AREA — smooth single fade-in, stays readable ─── */
     #message-section {
       display: none; flex: 1;
       overflow-y: auto; overflow-x: hidden;
@@ -209,7 +209,15 @@
     }
     #message-section::-webkit-scrollbar { width: 3px; }
     #message-section::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.3); border-radius: 4px; }
-    #message-section.open { display: block; }
+    #message-section.open {
+      display: block;
+      animation: msg-fade-in 1s cubic-bezier(0.22, 1, 0.36, 1) both;
+    }
+
+    @keyframes msg-fade-in {
+      from { opacity: 0; transform: translateY(16px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
 
     .divider {
       width: 50px; height: 1px; margin: 10px auto 14px;
@@ -218,26 +226,24 @@
 
     .message-text {
       font-family: 'Cormorant Garamond', serif;
-      font-size: clamp(1rem, 3.8vw, 1.13rem);
-      font-weight: 400; line-height: 1.9;
+      font-size: clamp(1.02rem, 3.9vw, 1.15rem);
+      font-weight: 400; line-height: 1.85;
       color: #fff;
-      text-shadow: 0 1px 6px rgba(0,0,0,0.45);
+      text-shadow: 0 1px 6px rgba(0,0,0,0.5);
       word-break: break-word;
+      white-space: pre-wrap;
     }
 
-    /* Each line revealed gracefully one after another */
     .msg-para {
-      display: block; margin-bottom: 14px;
-      opacity: 0; transform: translateY(12px);
-      transition: opacity 0.75s ease, transform 0.75s ease;
+      display: block; margin-bottom: 16px;
     }
-    .msg-para.revealed { opacity: 1; transform: translateY(0); }
 
-    .sorry-line {
-      display: block;
+    .sorry-block {
+      display: block; margin-top: 14px;
       color: hsl(340, 90%, 85%);
       font-style: italic; font-weight: 500; letter-spacing: 0.01em;
       text-shadow: 0 1px 8px rgba(0,0,0,0.5);
+      line-height: 1.7;
     }
 
     /* ─── SINCERE SECTION ─────────────────────────────────── */
@@ -320,11 +326,20 @@
         <p class="card-title">sorryyyyyyyyy ràk 🩷</p>
       </div>
 
-      <!-- MESSAGE SECTION (Scrolls line by line over photo) -->
+      <!-- MESSAGE SECTION (Comes once, stays visible & scrollable) -->
       <div id="message-section">
         <div class="divider"></div>
-        <div class="message-text" id="message-content"></div>
-        <div class="divider" style="margin-top:4px;"></div>
+        <div class="message-text" id="message-content">
+          <span class="msg-para"> sorryyyyyyyyy ràk 🩷</span>
+          <span class="msg-para">naki ardam ayithanledu nen em chesnano kani ardam ayithandi feel ayinav ani sorryyy. enduku nak fark padadu ani anukuntanav. padthadi ,nuvu anukunna danikante ekkuve padthadi .</span>
+          <span class="msg-para">naki ninna nuvu message cheyyadu anepatiki eyes lo water vochesnayi. nenu undaleka pothanna kousar tala nosthandi .</span>
+          <span class="msg-para">nene monna anna intrest ledu ani sorry kani kopam lo anesna etla kavalante atla behave chesthanna kada ,sare apkunta try chestha sorry ràkkkk.</span>
+          <span class="msg-para">nen em ninni unfollow kavala ani cheyyale edo ayindi chala ante chala badesindi ,nijam cheppalante nen unfollow chesna ani nik telsde 3 or 4 days tharvtha adi chusi nuvu unfollow chesnav ani kuda telsu . kanisam okkasari kuda adagala ani pileda.</span>
+          <span class="msg-para">tarvtha nuvu send chesna half hour ke nen react ayina kani nuvu chuskolee 7 hours naki gurthundi baga.andyke unsend chesna ,nen em ninni seen lo vodhileyy nuvee nanni sent vodilesnav .</span>
+          <span class="msg-para">nik farak padna lekpoena nen vodhiley lenu ,nijamgane change kalenu. enka nen conscious lo unde behave chestha try chestha.</span>
+          <span class="sorry-block">sorryyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyy<br/>sorryyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyy<br/>sorryyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyy<br/>sorryyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyy<br/>sorryyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyy.</span>
+        </div>
+        <div class="divider" style="margin-top:14px;"></div>
       </div>
 
       <!-- SINCERE BUTTON -->
@@ -336,28 +351,6 @@
 </div>
 
 <script>
-/* ═══════════════════════════════════════════════════════════
-   SACRED MESSAGE — EXACT TEXT LINE BY LINE
-═══════════════════════════════════════════════════════════ */
-const MESSAGE_LINES = [
-  " sorryyyyyyyyy ràk 🩷",
-  "naki ardam ayithanledu nen em chesnano kani ardam ayithandi feel ayinav ani sorryyy.",
-  "enduku nak fark padadu ani anukuntanav.",
-  "padthadi ,nuvu anukunna danikante ekkuve padthadi .",
-  "naki ninna nuvu message cheyyadu anepatiki eyes lo water vochesnayi.",
-  "nenu undaleka pothanna kousar tala nosthandi .",
-  "nene monna anna intrest ledu ani sorry kani kopam lo anesna etla kavalante atla behave chesthanna kada ,sare apkunta try chestha sorry ràkkkk.",
-  "nen em ninni unfollow kavala ani cheyyale edo ayindi chala ante chala badesindi ,nijam cheppalante nen unfollow chesna ani nik telsde 3 or 4 days tharvtha adi chusi nuvu unfollow chesnav ani kuda telsu . kanisam okkasari kuda adagala ani pileda.",
-  "tarvtha nuvu send chesna half hour ke nen react ayina kani nuvu chuskolee 7 hours naki gurthundi baga.andyke unsend chesna ,nen em ninni seen lo vodhileyy nuvee nanni sent vodilesnav .",
-  "nik farak padna lekpoena nen vodhiley lenu ,nijamgane change kalenu.",
-  "enka nen conscious lo unde behave chestha try chestha.",
-  "sorryyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyy",
-  "sorryyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyy",
-  "sorryyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyy",
-  "sorryyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyy",
-  "sorryyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyy."
-];
-
 /* Background drifting hearts */
 (function(){
   const c = document.getElementById('bg-hearts'), emojis = ['🩷','💗','💕','💖','🌸'];
@@ -385,7 +378,7 @@ musicBtn.addEventListener('click', () => {
   }
 });
 
-/* Open Button Click */
+/* Open Button Click — message comes ONCE with a smooth fade-in and STAYS */
 document.getElementById('open-btn').addEventListener('click', function() {
   const card = document.getElementById('card');
   card.style.animation = 'none';
@@ -396,54 +389,22 @@ document.getElementById('open-btn').addEventListener('click', function() {
   document.getElementById('card-overlay').classList.add('visible');
   document.getElementById('card-header').classList.add('visible');
   document.getElementById('message-section').classList.add('open');
+  document.getElementById('sincere-section').classList.add('visible');
 
   // Auto-play music on click (user gesture)
   bgAudio.play().then(() => { audioPlaying = true; musicBtn.classList.add('playing'); musicBtn.textContent = '🎶'; }).catch(()=>{});
 
   setTimeout(() => { card.style.animation = 'card-float 5s ease-in-out infinite'; }, 700);
 
-  // Start line-by-line reveal animation
-  startMessageReveal();
+  // Trigger floating hearts animation once message appears
+  setTimeout(spawnFloatingHearts, 1000);
 });
 
-function buildMessageDOM(){
-  const container = document.getElementById('message-content');
-  if(container.children.length > 0) return;
-  MESSAGE_LINES.forEach((text, i) => {
-    const span = document.createElement('span');
-    span.className = 'msg-para';
-    if(i >= 11) {
-      span.className = 'msg-para sorry-line';
-    }
-    span.textContent = text;
-    container.appendChild(span);
-  });
-}
-
-function startMessageReveal(){
-  buildMessageDOM();
-  const scroller = document.getElementById('message-section');
-  const paras = document.querySelectorAll('.msg-para');
-  let delay = 600;
-
-  paras.forEach((para, i) => {
-    const isLast = (i === paras.length - 1);
-    setTimeout(() => {
-      para.classList.add('revealed');
-      // Smooth auto scroll to keep newly revealed line in view
-      scroller.scrollTo({ top: scroller.scrollHeight, behavior: 'smooth' });
-      para.scrollIntoView({ behavior: 'smooth', block: 'end' });
-      if(isLast) setTimeout(finalSorryAnimation, 1200);
-    }, delay);
-    delay += isLast ? 1000 : 1600;
-  });
-}
-
-function finalSorryAnimation(){
+function spawnFloatingHearts(){
   const emojis = ['🩷','💗','💕','💖'], card = document.getElementById('card');
   let count = 0;
   function spawnHeart(){
-    if(count >= 22){ document.getElementById('sincere-section').classList.add('visible'); return; }
+    if(count >= 18) return;
     const el = document.createElement('span'); el.className = 'float-heart';
     el.textContent = emojis[Math.floor(Math.random()*emojis.length)];
     const r = card.getBoundingClientRect();
@@ -451,7 +412,7 @@ function finalSorryAnimation(){
     el.style.top = (r.top + r.height*0.4 + Math.random()*r.height*0.4) + 'px';
     el.style.fontSize = (16 + Math.random()*14) + 'px';
     document.body.appendChild(el); setTimeout(() => el.remove(), 3200);
-    count++; setTimeout(spawnHeart, 180 + Math.random()*220);
+    count++; setTimeout(spawnHeart, 200 + Math.random()*220);
   }
   spawnHeart();
 }

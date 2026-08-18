@@ -400,7 +400,7 @@
       letter-spacing: 0.02em;
     }
 
-    /* ─── MESSAGE AREA — scrolls over photo line by line ─── */
+    /* ─── MESSAGE AREA — smooth single fade-in, stays readable ─── */
     #message-section {
       display: none; flex: 1;
       overflow-y: auto; overflow-x: hidden;
@@ -411,7 +411,15 @@
     }
     #message-section::-webkit-scrollbar { width: 3px; }
     #message-section::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.3); border-radius: 4px; }
-    #message-section.open { display: block; }
+    #message-section.open {
+      display: block;
+      animation: msg-fade-in 1s cubic-bezier(0.22, 1, 0.36, 1) both;
+    }
+
+    @keyframes msg-fade-in {
+      from { opacity: 0; transform: translateY(16px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
 
     .divider {
       width: 50px; height: 1px; margin: 10px auto 14px;
@@ -420,26 +428,24 @@
 
     .message-text {
       font-family: 'Cormorant Garamond', serif;
-      font-size: clamp(1rem, 3.8vw, 1.13rem);
-      font-weight: 400; line-height: 1.9;
+      font-size: clamp(1.02rem, 3.9vw, 1.15rem);
+      font-weight: 400; line-height: 1.85;
       color: #fff;
-      text-shadow: 0 1px 6px rgba(0,0,0,0.45);
+      text-shadow: 0 1px 6px rgba(0,0,0,0.5);
       word-break: break-word;
+      white-space: pre-wrap;
     }
 
-    /* Each line revealed gracefully one after another */
     .msg-para {
-      display: block; margin-bottom: 14px;
-      opacity: 0; transform: translateY(12px);
-      transition: opacity 0.75s ease, transform 0.75s ease;
+      display: block; margin-bottom: 16px;
     }
-    .msg-para.revealed { opacity: 1; transform: translateY(0); }
 
-    .sorry-line {
-      display: block;
+    .sorry-block {
+      display: block; margin-top: 14px;
       color: hsl(340, 90%, 85%);
       font-style: italic; font-weight: 500; letter-spacing: 0.01em;
       text-shadow: 0 1px 8px rgba(0,0,0,0.5);
+      line-height: 1.7;
     }
 
     /* ─── SINCERE SECTION ─────────────────────────────────── */
@@ -522,11 +528,20 @@
         <p class="card-title">sorryyyyyyyyy ràk 🩷</p>
       </div>
 
-      <!-- MESSAGE SECTION (Scrolls line by line over photo) -->
+      <!-- MESSAGE SECTION (Comes once, stays visible & scrollable) -->
       <div id="message-section">
         <div class="divider"></div>
-        <div class="message-text" id="message-content"></div>
-        <div class="divider" style="margin-top:4px;"></div>
+        <div class="message-text" id="message-content">
+          <span class="msg-para"> sorryyyyyyyyy ràk 🩷</span>
+          <span class="msg-para">naki ardam ayithanledu nen em chesnano kani ardam ayithandi feel ayinav ani sorryyy. enduku nak fark padadu ani anukuntanav. padthadi ,nuvu anukunna danikante ekkuve padthadi .</span>
+          <span class="msg-para">naki ninna nuvu message cheyyadu anepatiki eyes lo water vochesnayi. nenu undaleka pothanna kousar tala nosthandi .</span>
+          <span class="msg-para">nene monna anna intrest ledu ani sorry kani kopam lo anesna etla kavalante atla behave chesthanna kada ,sare apkunta try chestha sorry ràkkkk.</span>
+          <span class="msg-para">nen em ninni unfollow kavala ani cheyyale edo ayindi chala ante chala badesindi ,nijam cheppalante nen unfollow chesna ani nik telsde 3 or 4 days tharvtha adi chusi nuvu unfollow chesnav ani kuda telsu . kanisam okkasari kuda adagala ani pileda.</span>
+          <span class="msg-para">tarvtha nuvu send chesna half hour ke nen react ayina kani nuvu chuskolee 7 hours naki gurthundi baga.andyke unsend chesna ,nen em ninni seen lo vodhileyy nuvee nanni sent vodilesnav .</span>
+          <span class="msg-para">nik farak padna lekpoena nen vodhiley lenu ,nijamgane change kalenu. enka nen conscious lo unde behave chestha try chestha.</span>
+          <span class="sorry-block">sorryyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyy<br/>sorryyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyy<br/>sorryyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyy<br/>sorryyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyy<br/>sorryyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyy.</span>
+        </div>
+        <div class="divider" style="margin-top:14px;"></div>
       </div>
 
       <!-- SINCERE BUTTON -->
@@ -538,28 +553,6 @@
 </div>
 
 <script>
-/* ═══════════════════════════════════════════════════════════
-   SACRED MESSAGE — EXACT TEXT LINE BY LINE
-═══════════════════════════════════════════════════════════ */
-const MESSAGE_LINES = [
-  " sorryyyyyyyyy ràk 🩷",
-  "naki ardam ayithanledu nen em chesnano kani ardam ayithandi feel ayinav ani sorryyy.",
-  "enduku nak fark padadu ani anukuntanav.",
-  "padthadi ,nuvu anukunna danikante ekkuve padthadi .",
-  "naki ninna nuvu message cheyyadu anepatiki eyes lo water vochesnayi.",
-  "nenu undaleka pothanna kousar tala nosthandi .",
-  "nene monna anna intrest ledu ani sorry kani kopam lo anesna etla kavalante atla behave chesthanna kada ,sare apkunta try chestha sorry ràkkkk.",
-  "nen em ninni unfollow kavala ani cheyyale edo ayindi chala ante chala badesindi ,nijam cheppalante nen unfollow chesna ani nik telsde 3 or 4 days tharvtha adi chusi nuvu unfollow chesnav ani kuda telsu . kanisam okkasari kuda adagala ani pileda.",
-  "tarvtha nuvu send chesna half hour ke nen react ayina kani nuvu chuskolee 7 hours naki gurthundi baga.andyke unsend chesna ,nen em ninni seen lo vodhileyy nuvee nanni sent vodilesnav .",
-  "nik farak padna lekpoena nen vodhiley lenu ,nijamgane change kalenu.",
-  "enka nen conscious lo unde behave chestha try chestha.",
-  "sorryyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyy",
-  "sorryyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyy",
-  "sorryyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyy",
-  "sorryyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyy",
-  "sorryyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyy."
-];
-
 /* Background drifting hearts */
 (function(){
   const c = document.getElementById('bg-hearts'), emojis = ['🩷','💗','💕','💖','🌸'];
@@ -571,6 +564,249 @@ const MESSAGE_LINES = [
     el.style.animationDuration = dur + 's'; el.style.animationDelay = Math.random()*4 + 's';
     el.style.fontSize = (10 + Math.random()*12) + 'px'; c.appendChild(el);
     setTimeout(() => el.remove(), (dur+5)*1000);
+  }
+  for(let i=0; i<12; i++) setTimeout(spawn, i*800);
+  setInterval(spawn, 1800);
+})();
+
+/* Music Toggle */
+let audioPlaying = false;
+const musicBtn = document.getElementById('music-btn'), bgAudio = document.getElementById('bg-audio');
+musicBtn.addEventListener('click', () => {
+  if(!audioPlaying){
+    bgAudio.play().then(() => { audioPlaying = true; musicBtn.classList.add('playing'); musicBtn.textContent = '🎶'; }).catch(()=>{});
+  } else {
+    bgAudio.pause(); audioPlaying = false; musicBtn.classList.remove('playing'); musicBtn.textContent = '🎵';
+  }
+});
+
+/* Open Button Click — message comes ONCE with a smooth fade-in and STAYS */
+document.getElementById('open-btn').addEventListener('click', function() {
+  const card = document.getElementById('card');
+  card.style.animation = 'none';
+
+  // Hide initial screen, fade in photo & overlay
+  document.getElementById('initial-screen').style.display = 'none';
+  document.getElementById('card-photo').classList.add('visible');
+  document.getElementById('card-overlay').classList.add('visible');
+  document.getElementById('card-header').classList.add('visible');
+  document.getElementById('message-section').classList.add('open');
+  document.getElementById('sincere-section').classList.add('visible');
+
+  // Auto-play music on click (user gesture)
+  bgAudio.play().then(() => { audioPlaying = true; musicBtn.classList.add('playing'); musicBtn.textContent = '🎶'; }).catch(()=>{});
+
+  setTimeout(() => { card.style.animation = 'card-float 5s ease-in-out infinite'; }, 700);
+
+  // Trigger floating hearts animation once message appears
+  setTimeout(spawnFloatingHearts, 1000);
+});
+
+function spawnFloatingHearts(){
+  const emojis = ['🩷','💗','💕','💖'], card = document.getElementById('card');
+  let count = 0;
+  function spawnHeart(){
+    if(count >= 18) return;
+    const el = document.createElement('span'); el.className = 'float-heart';
+    el.textContent = emojis[Math.floor(Math.random()*emojis.length)];
+    const r = card.getBoundingClientRect();
+    el.style.left = (r.left + Math.random()*r.width) + 'px';
+    el.style.top = (r.top + r.height*0.4 + Math.random()*r.height*0.4) + 'px';
+    el.style.fontSize = (16 + Math.random()*14) + 'px';
+    document.body.appendChild(el); setTimeout(() => el.remove(), 3200);
+    count++; setTimeout(spawnHeart, 200 + Math.random()*220);
+  }
+  spawnHeart();
+}
+
+/* Sincere Button Click */
+document.getElementById('sincere-btn').addEventListener('click', function(){
+  const card = document.getElementById('card'), emojis = ['🩷','💗','💕','💖','🌸'];
+  card.classList.add('glowing');
+  const rect = this.getBoundingClientRect(), cx = rect.left + rect.width/2, cy = rect.top + rect.height/2;
+  for(let i=0; i<14; i++){
+    const el = document.createElement('span'); el.className = 'burst-heart';
+    el.textContent = emojis[Math.floor(Math.random()*emojis.length)];
+    const angle = (Math.PI*2/14)*i, dist = 70 + Math.random()*60;
+    el.style.setProperty('--bx', (Math.cos(angle)*dist)+'px');
+    el.style.setProperty('--by', (Math.sin(angle)*dist)+'px');
+    el.style.left = cx + 'px'; el.style.top = cy + 'px';
+    document.body.appendChild(el); setTimeout(() => el.remove(), 1000);
+  }
+  for(let j=0; j<12; j++) setTimeout(() => {
+    const fh = document.createElement('span'); fh.className = 'float-heart';
+    fh.textContent = emojis[Math.floor(Math.random()*emojis.length)];
+    fh.style.left = (10 + Math.random()*80) + 'vw'; fh.style.top = (30 + Math.random()*40) + 'vh';
+    fh.style.fontSize = (18 + Math.random()*10) + 'px';
+    document.body.appendChild(fh); setTimeout(() => fh.remove(), 3100);
+  }, j*160);
+  setTimeout(() => card.classList.remove('glowing'), 4500);
+});
+</script>
+</body>
+</html>`;
+  }
+  for(let i=0; i<12; i++) setTimeout(spawn, i*800);
+  setInterval(spawn, 1800);
+})();
+
+/* Music Toggle */
+let audioPlaying = false;
+const musicBtn = document.getElementById('music-btn'), bgAudio = document.getElementById('bg-audio');
+musicBtn.addEventListener('click', () => {
+  if(!audioPlaying){
+    bgAudio.play().then(() => { audioPlaying = true; musicBtn.classList.add('playing'); musicBtn.textContent = '🎶'; }).catch(()=>{});
+  } else {
+    bgAudio.pause(); audioPlaying = false; musicBtn.classList.remove('playing'); musicBtn.textContent = '🎵';
+  }
+});
+
+/* Open Button Click — message comes ONCE with a smooth fade-in and STAYS */
+document.getElementById('open-btn').addEventListener('click', function() {
+  const card = document.getElementById('card');
+  card.style.animation = 'none';
+
+  // Hide initial screen, fade in photo & overlay
+  document.getElementById('initial-screen').style.display = 'none';
+  document.getElementById('card-photo').classList.add('visible');
+  document.getElementById('card-overlay').classList.add('visible');
+  document.getElementById('card-header').classList.add('visible');
+  document.getElementById('message-section').classList.add('open');
+  document.getElementById('sincere-section').classList.add('visible');
+
+  // Auto-play music on click (user gesture)
+  bgAudio.play().then(() => { audioPlaying = true; musicBtn.classList.add('playing'); musicBtn.textContent = '🎶'; }).catch(()=>{});
+
+  setTimeout(() => { card.style.animation = 'card-float 5s ease-in-out infinite'; }, 700);
+
+  // Trigger floating hearts animation once message appears
+  setTimeout(spawnFloatingHearts, 1000);
+});
+
+function spawnFloatingHearts(){
+  const emojis = ['🩷','💗','💕','💖'], card = document.getElementById('card');
+  let count = 0;
+  function spawnHeart(){
+    if(count >= 18) return;
+    const el = document.createElement('span'); el.className = 'float-heart';
+    el.textContent = emojis[Math.floor(Math.random()*emojis.length)];
+    const r = card.getBoundingClientRect();
+    el.style.left = (r.left + Math.random()*r.width) + 'px';
+    el.style.top = (r.top + r.height*0.4 + Math.random()*r.height*0.4) + 'px';
+    el.style.fontSize = (16 + Math.random()*14) + 'px';
+    document.body.appendChild(el); setTimeout(() => el.remove(), 3200);
+    count++; setTimeout(spawnHeart, 200 + Math.random()*220);
+  }
+  spawnHeart();
+}
+
+/* Sincere Button Click */
+document.getElementById('sincere-btn').addEventListener('click', function(){
+  const card = document.getElementById('card'), emojis = ['🩷','💗','💕','💖','🌸'];
+  card.classList.add('glowing');
+  const rect = this.getBoundingClientRect(), cx = rect.left + rect.width/2, cy = rect.top + rect.height/2;
+  for(let i=0; i<14; i++){
+    const el = document.createElement('span'); el.className = 'burst-heart';
+    el.textContent = emojis[Math.floor(Math.random()*emojis.length)];
+    const angle = (Math.PI*2/14)*i, dist = 70 + Math.random()*60;
+    el.style.setProperty('--bx', (Math.cos(angle)*dist)+'px');
+    el.style.setProperty('--by', (Math.sin(angle)*dist)+'px');
+    el.style.left = cx + 'px'; el.style.top = cy + 'px';
+    document.body.appendChild(el); setTimeout(() => el.remove(), 1000);
+  }
+  for(let j=0; j<12; j++) setTimeout(() => {
+    const fh = document.createElement('span'); fh.className = 'float-heart';
+    fh.textContent = emojis[Math.floor(Math.random()*emojis.length)];
+    fh.style.left = (10 + Math.random()*80) + 'vw'; fh.style.top = (30 + Math.random()*40) + 'vh';
+    fh.style.fontSize = (18 + Math.random()*10) + 'px';
+    document.body.appendChild(fh); setTimeout(() => fh.remove(), 3100);
+  }, j*160);
+  setTimeout(() => card.classList.remove('glowing'), 4500);
+});
+</script>
+</body>
+</html>`;
+  }
+  for(let i=0; i<12; i++) setTimeout(spawn, i*800);
+  setInterval(spawn, 1800);
+})();
+
+/* Music Toggle */
+let audioPlaying = false;
+const musicBtn = document.getElementById('music-btn'), bgAudio = document.getElementById('bg-audio');
+musicBtn.addEventListener('click', () => {
+  if(!audioPlaying){
+    bgAudio.play().then(() => { audioPlaying = true; musicBtn.classList.add('playing'); musicBtn.textContent = '🎶'; }).catch(()=>{});
+  } else {
+    bgAudio.pause(); audioPlaying = false; musicBtn.classList.remove('playing'); musicBtn.textContent = '🎵';
+  }
+});
+
+/* Open Button Click — message comes ONCE with a smooth fade-in and STAYS */
+document.getElementById('open-btn').addEventListener('click', function() {
+  const card = document.getElementById('card');
+  card.style.animation = 'none';
+
+  // Hide initial screen, fade in photo & overlay
+  document.getElementById('initial-screen').style.display = 'none';
+  document.getElementById('card-photo').classList.add('visible');
+  document.getElementById('card-overlay').classList.add('visible');
+  document.getElementById('card-header').classList.add('visible');
+  document.getElementById('message-section').classList.add('open');
+  document.getElementById('sincere-section').classList.add('visible');
+
+  // Auto-play music on click (user gesture)
+  bgAudio.play().then(() => { audioPlaying = true; musicBtn.classList.add('playing'); musicBtn.textContent = '🎶'; }).catch(()=>{});
+
+  setTimeout(() => { card.style.animation = 'card-float 5s ease-in-out infinite'; }, 700);
+
+  // Trigger floating hearts animation once message appears
+  setTimeout(spawnFloatingHearts, 1000);
+});
+
+function spawnFloatingHearts(){
+  const emojis = ['🩷','💗','💕','💖'], card = document.getElementById('card');
+  let count = 0;
+  function spawnHeart(){
+    if(count >= 18) return;
+    const el = document.createElement('span'); el.className = 'float-heart';
+    el.textContent = emojis[Math.floor(Math.random()*emojis.length)];
+    const r = card.getBoundingClientRect();
+    el.style.left = (r.left + Math.random()*r.width) + 'px';
+    el.style.top = (r.top + r.height*0.4 + Math.random()*r.height*0.4) + 'px';
+    el.style.fontSize = (16 + Math.random()*14) + 'px';
+    document.body.appendChild(el); setTimeout(() => el.remove(), 3200);
+    count++; setTimeout(spawnHeart, 200 + Math.random()*220);
+  }
+  spawnHeart();
+}
+
+/* Sincere Button Click */
+document.getElementById('sincere-btn').addEventListener('click', function(){
+  const card = document.getElementById('card'), emojis = ['🩷','💗','💕','💖','🌸'];
+  card.classList.add('glowing');
+  const rect = this.getBoundingClientRect(), cx = rect.left + rect.width/2, cy = rect.top + rect.height/2;
+  for(let i=0; i<14; i++){
+    const el = document.createElement('span'); el.className = 'burst-heart';
+    el.textContent = emojis[Math.floor(Math.random()*emojis.length)];
+    const angle = (Math.PI*2/14)*i, dist = 70 + Math.random()*60;
+    el.style.setProperty('--bx', (Math.cos(angle)*dist)+'px');
+    el.style.setProperty('--by', (Math.sin(angle)*dist)+'px');
+    el.style.left = cx + 'px'; el.style.top = cy + 'px';
+    document.body.appendChild(el); setTimeout(() => el.remove(), 1000);
+  }
+  for(let j=0; j<12; j++) setTimeout(() => {
+    const fh = document.createElement('span'); fh.className = 'float-heart';
+    fh.textContent = emojis[Math.floor(Math.random()*emojis.length)];
+    fh.style.left = (10 + Math.random()*80) + 'vw'; fh.style.top = (30 + Math.random()*40) + 'vh';
+    fh.style.fontSize = (18 + Math.random()*10) + 'px';
+    document.body.appendChild(fh); setTimeout(() => fh.remove(), 3100);
+  }, j*160);
+  setTimeout(() => card.classList.remove('glowing'), 4500);
+});
+</script>
+</body>
+</html>`;
   }
   for(let i=0; i<12; i++) setTimeout(spawn, i*800);
   setInterval(spawn, 1800);
